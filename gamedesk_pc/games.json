@@ -1,0 +1,29 @@
+{
+  "games": {
+    "Google Chrome": {
+      "total_time": 1671,
+      "weekly_time": 0,
+      "monthly_time": 1671,
+      "last_played": "2026-07-03",
+      "session_count": 7
+    },
+    "Forza Horizon 6": {
+      "total_time": 2569,
+      "weekly_time": 0,
+      "monthly_time": 2569,
+      "last_played": "2026-07-04",
+      "session_count": 10
+    },
+    "Sublime Text": {
+      "total_time": 368,
+      "weekly_time": 307,
+      "monthly_time": 368,
+      "last_played": "2026-07-06",
+      "session_count": 13
+    }
+  },
+  "meta": {
+    "last_weekly_reset": "2026-07-06",
+    "last_monthly_reset": "2026-07-02"
+  }
+}

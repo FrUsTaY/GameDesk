@@ -30,7 +30,7 @@ DisplayManager::DisplayManager(TFT_eSPI& tft)
 void DisplayManager::init() {
     _tft.init();
     _tft.setRotation(1);
-    _tft.fillScreen(TFT_BLACK);
+    _tft.fillScreen(COLOR_BG);
     _tft.setTextColor(COLOR_TEXT, COLOR_BG);
     _tft.setTextSize(1);
     pinMode(TFT_BL, OUTPUT);
@@ -46,7 +46,7 @@ void DisplayManager::startBoot() {
     _lastProgressFill = 0;
     _lastState = UIState::BOOT;
 
-    _tft.fillScreen(TFT_BLACK);
+    _tft.fillScreen(COLOR_BG);
     _drawProgressBarFrame();
     _drawLogoStep(0);
     _fadeStep = 0;
@@ -88,14 +88,14 @@ bool DisplayManager::updateBoot() {
 }
 
 void DisplayManager::_drawProgressBarFrame() {
-    _tft.drawRect(20, 200, 280, 8, TFT_WHITE);
+    _tft.drawRect(20, 200, 280, 8, COLOR_SEPARATOR);
 }
 
 void DisplayManager::_drawLogoStep(int step) {
-    const uint16_t colors[5] = {0x2104, 0x4208, 0x7BEF, 0xBDF7, 0xFFFF};
+    const uint16_t colors[5] = {COLOR_LOGO_1, COLOR_LOGO_2, COLOR_LOGO_3, COLOR_LOGO_4, COLOR_LOGO_5};
     uint16_t color = colors[step];
 
-    _tft.setTextColor(color, TFT_BLACK);
+    _tft.setTextColor(color, COLOR_BG);
     _tft.setTextFont(4);
     _tft.setTextSize(2);
 
@@ -261,7 +261,7 @@ void DisplayManager::drawRecentGames() {
     const int maxVisible = MAX_VISIBLE_ITEMS;
 
     if (gameCount == 0) {
-        _tft.setTextColor(COLOR_TEXT, COLOR_BG);
+        _tft.setTextColor(COLOR_TEXT_DIM, COLOR_BG);
         _tft.setTextFont(2);
         _tft.setTextSize(1);
         _tft.drawCentreString("Нет данных", _tft.width() / 2, startY + 60, 2);
@@ -277,7 +277,7 @@ void DisplayManager::drawRecentGames() {
         bool isSelected = (i == _recentSelectedIndex);
 
         uint16_t bgColor = isSelected ? COLOR_HIGHLIGHT : COLOR_BG;
-        uint16_t textColor = isSelected ? COLOR_TEXT : TFT_DARKGREY;
+        uint16_t textColor = isSelected ? COLOR_TEXT : COLOR_TEXT_DIM;
 
         if (isSelected) {
             _tft.fillRect(10, yPos - 4, _tft.width() - 20, lineHeight - 4, bgColor);
@@ -312,15 +312,15 @@ void DisplayManager::drawRecentGames() {
         float posRatio = (float)_recentScrollOffset / (gameCount - maxVisible);
         int thumbY = barY + (int)((barHeight - thumbHeight) * posRatio);
 
-        _tft.fillRect(barX, barY, barWidth, barHeight, TFT_DARKGREY);
-        _tft.fillRect(barX, thumbY, barWidth, thumbHeight, TFT_WHITE);
+        _tft.fillRect(barX, barY, barWidth, barHeight, COLOR_SEPARATOR);
+        _tft.fillRect(barX, thumbY, barWidth, thumbHeight, COLOR_TEXT);
     }
 }
 
 void DisplayManager::drawHome() {
     _tft.fillScreen(COLOR_BG);
 
-    _tft.setTextColor(TFT_DARKGREY, COLOR_BG);
+    _tft.setTextColor(COLOR_TEXT_DIM, COLOR_BG);
     _tft.setTextFont(1);
     _tft.setTextSize(1);
     _tft.drawCentreString("GAMEDESK", _tft.width() / 2, 5, 1);
@@ -335,7 +335,7 @@ void DisplayManager::drawHome() {
     // на экране было написано "приложение не запущено", что вводит в заблуждение.
     // По ТЗ §8.1 в этом случае должно быть просто "Нет активной игры".
     if (isIdle && !hasGame) {
-        _tft.setTextColor(TFT_DARKGREY, COLOR_BG);
+        _tft.setTextColor(COLOR_TEXT_DIM, COLOR_BG);
         _tft.setTextFont(2);
         _tft.setTextSize(1);
         _tft.drawCentreString("Нет активной игры", _tft.width() / 2, 110, 2);
@@ -362,7 +362,7 @@ void DisplayManager::drawHome() {
         _lastTimerUpdate = millis();
     }
     else {
-        _tft.setTextColor(TFT_DARKGREY, COLOR_BG);
+        _tft.setTextColor(COLOR_TEXT_DIM, COLOR_BG);
         _tft.setTextFont(2);
         _tft.setTextSize(1);
         _tft.drawCentreString("No active game", _tft.width() / 2, 80, 2);
@@ -370,7 +370,7 @@ void DisplayManager::drawHome() {
         _isTimerActive = false;
     }
 
-    _tft.setTextColor(TFT_DARKGREY, COLOR_BG);
+    _tft.setTextColor(COLOR_TEXT_DIM, COLOR_BG);
     _tft.setTextFont(1);
     _tft.setTextSize(1);
     _tft.drawCentreString("← MON | STA | REC →", _tft.width() / 2, _tft.height() - 15, 1);
@@ -413,7 +413,7 @@ void DisplayManager::drawStats() {
     // Реальные данные из последнего <STATS;...> пакета, а не заглушка.
     // ESP32 сам ничего не считает (ТЗ §0) — просто отображает то, что прислал ПК.
     if (!statsSummary.hasData) {
-        drawCenteredText("No data yet", 130, 2, TFT_DARKGREY);
+        drawCenteredText("No data yet", 130, 2, COLOR_TEXT_DIM);
         return;
     }
 
@@ -474,7 +474,7 @@ void DisplayManager::drawDetailView() {
     if (gameCount == 0 || _recentSelectedIndex < 0 || _recentSelectedIndex >= gameCount) {
         _tft.fillScreen(COLOR_BG);
         drawHeader("DETAIL VIEW");
-        _tft.setTextColor(TFT_DARKGREY, COLOR_BG);
+        _tft.setTextColor(COLOR_TEXT_DIM, COLOR_BG);
         _tft.setTextFont(2);
         _tft.setTextSize(1);
         _tft.drawCentreString("Нет данных", _tft.width() / 2, 120, 2);
@@ -490,7 +490,7 @@ void DisplayManager::drawDetailView() {
     _tft.drawCentreString(game.name, _tft.width() / 2, 30, 4);
 
     int lineY = 70;
-    _tft.drawLine(20, lineY, _tft.width() - 20, lineY, TFT_DARKGREY);
+    _tft.drawLine(20, lineY, _tft.width() - 20, lineY, COLOR_SEPARATOR);
 
     const int startY = 90;
     const int lineHeight = 35;
@@ -531,11 +531,11 @@ void DisplayManager::drawDetailView() {
     _tft.setTextColor(COLOR_TEXT, COLOR_BG);
     _tft.drawString("Last:", 30, y);
     String lastStr = (strlen(game.last_played) > 0) ? String(game.last_played) : "--";
-    _tft.setTextColor(TFT_DARKGREY, COLOR_BG);
+    _tft.setTextColor(COLOR_TEXT_DIM, COLOR_BG);
     _tft.drawString(lastStr, 120, y);
 
     int hintY = _tft.height() - 30;
-    _tft.setTextColor(TFT_DARKGREY, COLOR_BG);
+    _tft.setTextColor(COLOR_TEXT_DIM, COLOR_BG);
     _tft.setTextFont(1);
     _tft.setTextSize(1);
     _tft.drawCentreString("← назад   (CENTER долгое=настройки)", _tft.width() / 2, hintY, 1);
@@ -555,7 +555,7 @@ void DisplayManager::drawSettingsMain() {
     drawHeader("SETTINGS");
     const char* items[] = {"Connection Status", "Restart Device", "About", "Exit"};
     for (int i = 0; i < 4; i++) {
-        uint16_t textColor = (i == _settingsSelectedIndex) ? TFT_RED : COLOR_TEXT;
+        uint16_t textColor = (i == _settingsSelectedIndex) ? COLOR_ACCENT : COLOR_TEXT;
         _tft.setTextColor(textColor, COLOR_BG);
         _tft.setTextFont(2);
         _tft.setTextSize(1);
@@ -620,23 +620,23 @@ void DisplayManager::drawSettingsRestartConfirm() {
 }
 
 void DisplayManager::drawOffline() {
-    _tft.fillScreen(TFT_BLACK);
-    _tft.setTextColor(TFT_RED, TFT_BLACK);
+    _tft.fillScreen(COLOR_WAITING_BG);
+    _tft.setTextColor(COLOR_WAITING_TEXT, COLOR_WAITING_BG);
     _tft.setTextFont(4);
     _tft.setTextSize(1);
     _tft.drawCentreString("Waiting for APP GameDesk", _tft.width() / 2, 90, 4);
-    _tft.setTextColor(TFT_DARKGREY, TFT_BLACK);
+    _tft.setTextColor(COLOR_TEXT_DIM, COLOR_WAITING_BG);
     _tft.setTextFont(2);
     _tft.drawCentreString("Launch GameDesk.exe on PC", _tft.width() / 2, 150, 2);
 }
 
 void DisplayManager::drawWaiting() {
-    _tft.fillScreen(TFT_BLACK);
-    _tft.setTextColor(TFT_RED, TFT_BLACK);
+    _tft.fillScreen(COLOR_WAITING_BG);
+    _tft.setTextColor(COLOR_WAITING_TEXT, COLOR_WAITING_BG);
     _tft.setTextFont(4);
     _tft.setTextSize(1);
     _tft.drawCentreString("Waiting for APP GameDesk", _tft.width() / 2, 90, 4);
-    _tft.setTextColor(TFT_DARKGREY, TFT_BLACK);
+    _tft.setTextColor(COLOR_TEXT_DIM, COLOR_WAITING_BG);
     _tft.setTextFont(2);
     _tft.drawCentreString("Launch GameDesk.exe on PC", _tft.width() / 2, 150, 2);
 }

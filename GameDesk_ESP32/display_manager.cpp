@@ -317,13 +317,19 @@ void DisplayManager::drawRecentGames() {
     }
 }
 
-void DisplayManager::drawHome() {
-    _tft.fillScreen(COLOR_BG);
+void DisplayManager::drawHome(bool fullRedraw) {
+    if (fullRedraw) {
+        _tft.fillScreen(COLOR_BG);
+        _tft.setTextColor(COLOR_TEXT_DIM, COLOR_BG);
+        _tft.setTextFont(1);
+        _tft.setTextSize(1);
+        _tft.drawCentreString("GAMEDESK", _tft.width() / 2, 5, 1);
+        _tft.drawCentreString("← MON | STA | REC →", _tft.width() / 2, _tft.height() - 15, 1);
+    }
 
-    _tft.setTextColor(COLOR_TEXT_DIM, COLOR_BG);
-    _tft.setTextFont(1);
-    _tft.setTextSize(1);
-    _tft.drawCentreString("GAMEDESK", _tft.width() / 2, 5, 1);
+    if (!fullRedraw) {
+        _tft.fillRect(0, 40, _tft.width(), 100, COLOR_BG); // Очищаем область для названия игры (60) и статуса (80, 110)
+    }
 
     bool hasGame = (strlen(parsedData.game) > 0 && strcmp(parsedData.game, "NONE") != 0);
     bool isIdle = (strcmp(parsedData.state, "IDLE") == 0);
@@ -369,16 +375,24 @@ void DisplayManager::drawHome() {
         _lastGameName[0] = '\0';
         _isTimerActive = false;
     }
-
-    _tft.setTextColor(COLOR_TEXT_DIM, COLOR_BG);
-    _tft.setTextFont(1);
-    _tft.setTextSize(1);
-    _tft.drawCentreString("← MON | STA | REC →", _tft.width() / 2, _tft.height() - 15, 1);
 }
 
-void DisplayManager::drawMonitor() {
-    _tft.fillScreen(COLOR_BG);
-    drawHeader("MONITOR");
+void DisplayManager::drawMonitor(bool fullRedraw) {
+    if (fullRedraw) {
+        _tft.fillScreen(COLOR_BG);
+        drawHeader("MONITOR");
+    }
+
+    // При частичном обновлении просто затираем старый текст фоном благодаря setTextColor(text, bg)
+    // Строку с пробелами можно использовать для гарантированного затирания, но здесь
+    // drawCentreString центрирует текст. Чтобы избежать артефактов при изменении длины,
+    // лучше нарисовать пустой прямоугольник над областью данных или использовать пробелы.
+
+    // В данном случае используем fillRect для гарантированной очистки строк,
+    // чтобы при уменьшении количества символов не оставался старый текст.
+    if (!fullRedraw) {
+        _tft.fillRect(0, 90, _tft.width(), 120, COLOR_BG);
+    }
 
     // Реальные данные из последнего DATA-пакета (parsedData), а не заглушка.
     // -1 (нет данных с ПК, например LibreHardwareMonitor недоступен) -> "--"
@@ -406,9 +420,15 @@ void DisplayManager::drawMonitor() {
     drawCenteredText(buf, 180, 4, COLOR_RAM);
 }
 
-void DisplayManager::drawStats() {
-    _tft.fillScreen(COLOR_BG);
-    drawHeader("STATS");
+void DisplayManager::drawStats(bool fullRedraw) {
+    if (fullRedraw) {
+        _tft.fillScreen(COLOR_BG);
+        drawHeader("STATS");
+    }
+
+    if (!fullRedraw) {
+        _tft.fillRect(0, 90, _tft.width(), 120, COLOR_BG);
+    }
 
     // Реальные данные из последнего <STATS;...> пакета, а не заглушка.
     // ESP32 сам ничего не считает (ТЗ §0) — просто отображает то, что прислал ПК.
@@ -644,9 +664,11 @@ void DisplayManager::drawWaiting() {
 void DisplayManager::refreshScreen() {
     UIState state = _lastState;
     switch (state) {
-        case UIState::HOME:          drawHome();         break;
-        case UIState::MONITOR:       drawMonitor();      break;
-        case UIState::STATS:         drawStats();        break;
+        // При периодическом обновлении от ПК вызываем отрисовку без очистки экрана (fullRedraw = false)
+        case UIState::HOME:          drawHome(false);    break;
+        case UIState::MONITOR:       drawMonitor(false); break;
+        case UIState::STATS:         drawStats(false);   break;
+        // Для остальных экранов оставляем как есть, если они зависят от новых данных
         case UIState::RECENT_GAMES:  drawRecentGames();  break;
         case UIState::DETAIL_VIEW:   drawDetailView();   break;
         case UIState::SETTINGS:      drawSettings();     break;

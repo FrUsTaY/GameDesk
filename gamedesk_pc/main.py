@@ -251,12 +251,10 @@ class GameDeskApp:
         if not self.tray_icon:
             return
 
-        is_auto = autostart.is_autostart_enabled()
-
         menu = pystray.Menu(
-            pystray.MenuItem("Старт", lambda icon, item: self.start_monitoring(), enabled=not self.monitoring_active),
-            pystray.MenuItem("Стоп", lambda icon, item: self.stop_monitoring(), enabled=self.monitoring_active),
-            pystray.MenuItem("Управление играми", lambda icon, item: self.tk_root.after(0, self.show_settings), enabled=not self.monitoring_active),
+            pystray.MenuItem("Старт", lambda icon, item: self.start_monitoring(), enabled=lambda item: not self.monitoring_active),
+            pystray.MenuItem("Стоп", lambda icon, item: self.stop_monitoring(), enabled=lambda item: self.monitoring_active),
+            pystray.MenuItem("Управление играми", lambda icon, item: self.tk_root.after(0, self.show_settings), enabled=lambda item: not self.monitoring_active),
             pystray.Menu.SEPARATOR,
             pystray.MenuItem("Автозапуск с Windows", self.toggle_autostart, checked=lambda item: autostart.is_autostart_enabled()),
             pystray.Menu.SEPARATOR,

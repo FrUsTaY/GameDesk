@@ -35,10 +35,10 @@ public:
     void setConnectionStatus(const ConnectionInfo& status);
 
     // Публичные методы отрисовки экранов
-    void drawHome();
+    void drawHome(bool fullRedraw = true);
     void updateHomeTimer(); // обновить только таймер на HOME (вызывать каждую секунду)
-    void drawMonitor();
-    void drawStats();
+    void drawMonitor(bool fullRedraw = true);
+    void drawStats(bool fullRedraw = true);
     void drawRecentGames();          // рисует весь экран
     void drawDetailView();
     void drawSettings();

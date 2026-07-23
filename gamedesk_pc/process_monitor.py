@@ -5,7 +5,7 @@
 """
 
 import psutil
-from config import GAMES
+import config
 
 
 class ProcessMonitor:
@@ -18,7 +18,7 @@ class ProcessMonitor:
 
         Используется для быстрого сравнения без учёта регистра.
         """
-        return [name.lower() for name in GAMES.keys()]
+        return [name.lower() for name in config.GAMES.keys()]
 
     @staticmethod
     def get_active_game() -> str | None:
@@ -47,7 +47,7 @@ class ProcessMonitor:
                 # Проверяем, есть ли такое имя в списке известных
                 if proc_name_lower in known_names_lower:
                     # Находим оригинальный ключ (с учётом регистра) для получения отображаемого имени
-                    for full_name, display_name in GAMES.items():
+                    for full_name, display_name in config.GAMES.items():
                         if full_name.lower() == proc_name_lower:
                             return display_name
             except (psutil.NoSuchProcess, psutil.AccessDenied, psutil.ZombieProcess):

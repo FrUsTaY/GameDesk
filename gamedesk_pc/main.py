@@ -8,6 +8,7 @@ import random
 import sys
 import time
 import threading
+import queue
 from datetime import datetime
 from typing import Optional, Dict, Any
 
@@ -40,6 +41,7 @@ class GameDeskApp:
         self.tray_icon = None
         self.settings_window = None
         self.tk_root = None
+        self.gui_queue = queue.Queue()
 
     def start_monitoring(self):
         if self.monitoring_active:
@@ -260,7 +262,7 @@ class GameDeskApp:
         menu = pystray.Menu(
             pystray.MenuItem("Старт", lambda icon, item: self.start_monitoring(), enabled=lambda item: not self.monitoring_active),
             pystray.MenuItem("Стоп", lambda icon, item: self.stop_monitoring(), enabled=lambda item: self.monitoring_active),
-            pystray.MenuItem("Управление играми", lambda icon, item: self.tk_root.after(0, self.show_settings), enabled=lambda item: not self.monitoring_active),
+            pystray.MenuItem("Управление играми", lambda icon, item: self.gui_queue.put(self.show_settings), enabled=lambda item: not self.monitoring_active),
             pystray.Menu.SEPARATOR,
             pystray.MenuItem("Автозапуск с Windows", self.toggle_autostart, checked=lambda item: autostart.is_autostart_enabled()),
             pystray.Menu.SEPARATOR,
@@ -290,6 +292,11 @@ class GameDeskApp:
         # Главный цикл Tkinter для обработки событий GUI (окон)
         while self.running:
             try:
+                # Обработка событий из других потоков (от pystray)
+                while not self.gui_queue.empty():
+                    task = self.gui_queue.get_nowait()
+                    task()
+
                 self.tk_root.update_idletasks()
                 self.tk_root.update()
             except tk.TclError:

@@ -27,7 +27,10 @@ def is_autostart_enabled() -> bool:
         )
         value, _ = winreg.QueryValueEx(key, APP_NAME)
         winreg.CloseKey(key)
-        return value == get_exe_path()
+        # Удаляем кавычки из значения реестра перед сравнением,
+        # так как мы записываем путь в двойных кавычках
+        clean_value = value.strip('"')
+        return clean_value == get_exe_path()
     except OSError:
         return False
 

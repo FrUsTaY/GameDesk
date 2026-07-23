@@ -40,25 +40,33 @@ python --version
 echo.
 
 REM ------------------------------------------------------------------
-REM 2. Install runtime dependencies
+REM 2. Check and Activate Virtual Environment
 REM ------------------------------------------------------------------
-echo [2/7] Installing dependencies from requirements.txt...
-python -m pip install --upgrade pip >nul
-python -m pip install -r requirements.txt
-if errorlevel 1 (
-    echo [ERROR] Failed to install dependencies from requirements.txt
-    pause
-    exit /b 1
+set VENV_DIR=venv
+if not exist "%VENV_DIR%\Scripts\python.exe" (
+    echo [2/7] Creating virtual environment in '%VENV_DIR%'...
+    python -m venv "%VENV_DIR%"
+    if errorlevel 1 (
+        echo [ERROR] Failed to create virtual environment.
+        pause
+        exit /b 1
+    )
+) else (
+    echo [2/7] Virtual environment found.
 )
+echo Activating virtual environment...
+call "%VENV_DIR%\Scripts\activate.bat"
 echo.
 
 REM ------------------------------------------------------------------
-REM 3. Install PyInstaller (build-time only, not needed at runtime)
+REM 3. Install runtime dependencies & PyInstaller in VENV
 REM ------------------------------------------------------------------
-echo [3/7] Installing PyInstaller...
+echo [3/7] Installing dependencies and PyInstaller...
+python -m pip install --upgrade pip >nul
+python -m pip install -r requirements.txt
 python -m pip install pyinstaller
 if errorlevel 1 (
-    echo [ERROR] Failed to install PyInstaller
+    echo [ERROR] Failed to install dependencies or PyInstaller in venv.
     pause
     exit /b 1
 )
@@ -95,9 +103,12 @@ if exist "icon.ico" (
 python -m PyInstaller --noconfirm --onedir --windowed --name %APP_NAME% %ICON_ARG% ^
     --collect-all pythonnet ^
     --collect-all clr_loader ^
+    --collect-all pystray ^
     --hidden-import clr ^
     --hidden-import serial.tools.list_ports_windows ^
     --hidden-import psutil ^
+    --hidden-import pystray ^
+    --hidden-import PIL ^
     main.py
 
 if errorlevel 1 (

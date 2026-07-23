@@ -92,7 +92,7 @@ if exist "icon.ico" (
     echo [5/7] Building %APP_NAME%.exe ^(this can take a couple of minutes^)...
 )
 
-python -m PyInstaller --noconfirm --onedir --console --name %APP_NAME% %ICON_ARG% ^
+python -m PyInstaller --noconfirm --onedir --windowed --name %APP_NAME% %ICON_ARG% ^
     --collect-all pythonnet ^
     --collect-all clr_loader ^
     --hidden-import clr ^
@@ -140,14 +140,18 @@ if !DLL_COUNT! EQU 0 (
 echo.
 
 REM ------------------------------------------------------------------
-REM 7. Copy the two JSON files next to GameDesk.exe (not inside the DLL
+REM 7. Copy the two JSON files and icon.ico next to GameDesk.exe (not inside the DLL
 REM    folder, not inside _internal - directly next to the .exe, as
 REM    requested). If they already exist from earlier runs/testing,
 REM    carry them over so accumulated stats / the edited game list
 REM    survive a rebuild. If not, GameDesk.exe will create games.json
 REM    and games_list.json itself on first run (see config.py).
 REM ------------------------------------------------------------------
-echo [7/7] Copying games.json / games_list.json next to %APP_NAME%.exe...
+echo [7/7] Copying games.json / games_list.json and icon.ico next to %APP_NAME%.exe...
+
+if exist "icon.ico" (
+    copy /y "icon.ico" "%DIST_DIR%\" >nul
+)
 
 if exist "games_list.json" (
     copy /y "games_list.json" "%DIST_DIR%\" >nul

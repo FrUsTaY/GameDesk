@@ -1,3 +1,5 @@
 psutil==5.9.8
 pyserial==3.5
 pythonnet>=3.1.0
+pystray
+Pillow

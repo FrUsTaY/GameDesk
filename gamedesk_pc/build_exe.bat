@@ -25,7 +25,7 @@ set DLL_SUBDIR=%DIST_DIR%\LibreHardwareMonitor
 REM ------------------------------------------------------------------
 REM 1. Check that Python is available in PATH
 REM ------------------------------------------------------------------
-where python >nul 2>nul
+python --version >nul 2>nul
 if errorlevel 1 (
     echo [ERROR] Python not found in PATH.
     echo Install Python 3.10+ from https://python.org and make sure to

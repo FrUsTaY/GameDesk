@@ -9,7 +9,7 @@ echo.
 cd /d "%~dp0"
 
 REM 1. Check Python
-where python >nul 2>nul
+python --version >nul 2>nul
 if errorlevel 1 (
     echo [ERROR] Python not found in PATH.
     pause

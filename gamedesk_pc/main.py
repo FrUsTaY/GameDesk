@@ -212,7 +212,7 @@ class GameDeskApp:
             return
 
         if self.settings_window is None:
-            self.settings_window = SettingsWindow(self.tk_root, self.stats, self._on_settings_closed)
+            self.settings_window = SettingsWindow(self.tk_root, self.stats, self._on_settings_closed, self.get_icon_path())
             self.settings_window.protocol("WM_DELETE_WINDOW", self.settings_window.on_close)
         else:
             self.settings_window.lift()
@@ -235,18 +235,26 @@ class GameDeskApp:
         if self.tk_root:
             self.tk_root.quit()
 
+    def get_icon_path(self):
+        import os
+        base_path = getattr(sys, '_MEIPASS', os.path.dirname(os.path.abspath(__file__)))
+
+        paths_to_check = [
+            os.path.join(base_path, 'icon.ico'),
+            os.path.join(os.path.dirname(base_path), 'icon.ico'),
+            os.path.join(os.getcwd(), 'icon.ico')
+        ]
+
+        for path in paths_to_check:
+            if os.path.exists(path):
+                return path
+        return None
+
     def _create_image(self):
         # Если есть icon.ico, загружаем, иначе генерируем простую
         try:
-            import os
-            # Ищем иконку рядом с exe или в текущей папке
-            base_path = getattr(sys, '_MEIPASS', os.path.dirname(os.path.abspath(__file__)))
-            icon_path = os.path.join(base_path, 'icon.ico')
-            if not os.path.exists(icon_path):
-                # Fallback для запуска из корня проекта
-                icon_path = os.path.join(os.path.dirname(base_path), 'icon.ico')
-
-            if os.path.exists(icon_path):
+            icon_path = self.get_icon_path()
+            if icon_path:
                 return Image.open(icon_path)
         except Exception:
             pass
@@ -271,6 +279,15 @@ class GameDeskApp:
         self.tray_icon.menu = menu
 
     def run(self):
+        # Tell Windows that this is a distinct app to avoid grouping under the default pythonw.exe icon
+        if sys.platform == "win32":
+            try:
+                import ctypes
+                myappid = 'gamedesk.pc.core.1'
+                ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(myappid)
+            except Exception:
+                pass
+
         # Инициализация скрытого Tkinter (используется только для создания окон настроек)
         self.tk_root = tk.Tk()
         self.tk_root.withdraw() # Скрываем главное окно

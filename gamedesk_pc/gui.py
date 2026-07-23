@@ -5,12 +5,19 @@ import os
 import config
 
 class SettingsWindow(tk.Toplevel):
-    def __init__(self, parent, stats_manager, on_close_callback):
+    def __init__(self, parent, stats_manager, on_close_callback, icon_path=None):
         super().__init__(parent)
         self.title("Управление играми - GameDesk")
         self.geometry("600x400")
         self.stats_manager = stats_manager
         self.on_close_callback = on_close_callback
+        self.icon_path = icon_path
+
+        if self.icon_path and os.path.exists(self.icon_path):
+            try:
+                self.iconbitmap(self.icon_path)
+            except Exception:
+                pass
 
         self.protocol("WM_DELETE_WINDOW", self.on_close)
 
@@ -85,6 +92,12 @@ class SettingsWindow(tk.Toplevel):
         dlg.title(title)
         dlg.geometry("400x150")
         dlg.grab_set()
+
+        if self.icon_path and os.path.exists(self.icon_path):
+            try:
+                dlg.iconbitmap(self.icon_path)
+            except Exception:
+                pass
 
         ttk.Label(dlg, text="Исполняемый файл (например, hl2.exe):").pack(pady=(10, 0))
         exe_var = tk.StringVar(value=initial_exe)

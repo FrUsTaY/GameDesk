@@ -48,7 +48,8 @@ class GameDeskApp:
         self.stop_event.clear()
         self.monitor_thread = threading.Thread(target=self._monitoring_loop, daemon=True)
         self.monitor_thread.start()
-        self._update_tray_menu()
+        if self.tray_icon:
+            self.tray_icon.update_menu()
 
     def stop_monitoring(self):
         if not self.monitoring_active:
@@ -57,7 +58,8 @@ class GameDeskApp:
         self.stop_event.set()
         if self.monitor_thread:
             self.monitor_thread.join(timeout=2)
-        self._update_tray_menu()
+        if self.tray_icon:
+            self.tray_icon.update_menu()
 
     def _monitoring_loop(self):
         """Фоновый поток для связи с ESP32 и телеметрии."""
@@ -219,6 +221,10 @@ class GameDeskApp:
     def toggle_autostart(self, icon, item):
         current = autostart.is_autostart_enabled()
         autostart.set_autostart(not current)
+
+        # Pystray menu needs update_menu for checking changes
+        if self.tray_icon:
+            self.tray_icon.update_menu()
 
     def on_quit(self, icon, item):
         self.stop_monitoring()

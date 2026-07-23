@@ -47,10 +47,16 @@ echo [INFO] Dependencies installed successfully.
 echo.
 
 REM 5. Run Application
-echo [INFO] Starting GameDesk in background...
-start "" pythonw main.py
+echo [INFO] Starting GameDesk...
+python main.py
+
+if %errorlevel% neq 0 (
+    echo.
+    echo [ERROR] Application exited with error code: %errorlevel%
+    pause
+    exit /b %errorlevel%
+)
 
 echo.
-echo [INFO] Application started! Look for the icon in your System Tray.
-echo [INFO] You can safely close this window now.
-timeout /t 5 >nul
+echo [INFO] Application closed.
+pause

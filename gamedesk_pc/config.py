@@ -1,14 +1,24 @@
 import json
 import os
+import sys
 
 """
 Конфигурационный модуль для GameDesk.
 """
 
+def get_app_dir():
+    """Возвращает директорию, где находится исполняемый файл или скрипт."""
+    if getattr(sys, 'frozen', False):
+        return os.path.dirname(sys.executable)
+    else:
+        return os.path.dirname(os.path.abspath(__file__))
+
+BASE_DIR = get_app_dir()
+
 # ----------------------------------------------------------------------
 # Список отслеживаемых игр (читается из внешнего файла)
 # ----------------------------------------------------------------------
-GAMES_LIST_FILE = "games_list.json"
+GAMES_LIST_FILE = os.path.join(BASE_DIR, "games_list.json")
 
 def load_games():
     # Если файла нет, создаем его со стандартным списком
@@ -30,8 +40,8 @@ GAMES = load_games()
 # ----------------------------------------------------------------------
 # Пути к файлам
 # ----------------------------------------------------------------------
-STATS_FILE = "games.json"      # файл статистики игр
-LOG_FILE = "gamedesk.log"      # файл журнала событий
+STATS_FILE = os.path.join(BASE_DIR, "games.json")      # файл статистики игр
+LOG_FILE = os.path.join(BASE_DIR, "gamedesk.log")      # файл журнала событий
 
 # ----------------------------------------------------------------------
 # Настройки Serial-порта (связь с ESP32)

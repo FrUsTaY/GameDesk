@@ -65,6 +65,7 @@
 #define COLOR_CPU          FIX_COLOR(255, 140, 60)    // мягкий оранжевый (температура CPU)
 #define COLOR_GPU          FIX_COLOR(60, 220, 120)    // мягкий зелёный (температура GPU)
 #define COLOR_RAM          FIX_COLOR(80, 180, 255)    // мягкий синий/голубой (использование RAM)
+#define COLOR_FPS          FIX_COLOR(40, 180, 80)     // темно-зеленый, читаемый (FPS)
 
 // ---- Специальные цвета ----
 #define COLOR_OFFLINE      FIX_COLOR(230, 80, 80)     // мягкий красный

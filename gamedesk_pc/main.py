@@ -127,6 +127,7 @@ class GameDeskApp:
                         "cpu": int(round(_pick(hw_telemetry["cpu_temp"], lhm_telemetry["cpu_temp"]))),
                         "gpu": int(round(_pick(hw_telemetry["gpu_temp"], lhm_telemetry["gpu_temp"]))),
                         "ram": int(round(_pick(hw_telemetry["ram_usage"], lhm_telemetry["ram_usage"]))),
+                        "fps": int(round(_pick(hw_telemetry.get("fps", -1), lhm_telemetry.get("fps", -1)))),
                     }
 
                     if tracker.is_active():
@@ -136,7 +137,7 @@ class GameDeskApp:
                             game=game_name,
                             session_str=session_str,
                             state="RUNNING",
-                            fps=-1,
+                            fps=telemetry["fps"],
                             cpu=telemetry["cpu"],
                             gpu=telemetry["gpu"],
                             ram=telemetry["ram"]
@@ -146,7 +147,7 @@ class GameDeskApp:
                             game="NONE",
                             session_str="00:00:00",
                             state="IDLE",
-                            fps=-1,
+                            fps=telemetry["fps"],
                             cpu=telemetry["cpu"],
                             gpu=telemetry["gpu"],
                             ram=telemetry["ram"]

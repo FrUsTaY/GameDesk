@@ -124,7 +124,7 @@ class TelemetryReader:
 
         # Если библиотека не инициализирована, возвращаем заглушку
         if not self._is_initialized or not CLR_AVAILABLE:
-            self._cache = {'cpu_temp': -1, 'gpu_temp': -1, 'ram_usage': -1}
+            self._cache = {'cpu_temp': -1, 'gpu_temp': -1, 'ram_usage': -1, 'fps': -1}
             self._cache_time = now
             return self._cache
 
@@ -136,11 +136,12 @@ class TelemetryReader:
             self._cache = {
                 'cpu_temp': cpu_temp if cpu_temp is not None else -1,
                 'gpu_temp': gpu_temp if gpu_temp is not None else -1,
-                'ram_usage': ram_usage if ram_usage is not None else -1
+                'ram_usage': ram_usage if ram_usage is not None else -1,
+                'fps': -1 # LHM doesn't provide FPS
             }
         except Exception as e:
             logger.error(f"Ошибка при сборе телеметрии: {e}")
-            self._cache = {'cpu_temp': -1, 'gpu_temp': -1, 'ram_usage': -1}
+            self._cache = {'cpu_temp': -1, 'gpu_temp': -1, 'ram_usage': -1, 'fps': -1}
 
         self._cache_time = now
         return self._cache

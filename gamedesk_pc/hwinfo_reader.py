@@ -223,7 +223,7 @@ class HWiNFOTelemetryReader:
     def __init__(self):
         self._reader = HWiNFOReader()
         self._cache: Dict[str, Union[int, float]] = {
-            "cpu_temp": -1, "gpu_temp": -1, "ram_usage": -1
+            "cpu_temp": -1, "gpu_temp": -1, "ram_usage": -1, "fps": -1
         }
         self._cache_time: float = 0
         self._cache_ttl: float = 2.0
@@ -236,12 +236,12 @@ class HWiNFOTelemetryReader:
         entries = self._reader.get_entries()
 
         if not entries:
-            self._cache = {"cpu_temp": -1, "gpu_temp": -1, "ram_usage": -1}
+            self._cache = {"cpu_temp": -1, "gpu_temp": -1, "ram_usage": -1, "fps": -1}
             self._cache_time = now
             return self._cache
 
         # 1. ПОПЫТКА №1: Точный поиск (Fast Path)
-        cpu_temp, gpu_temp, ram_usage = -1, -1, -1
+        cpu_temp, gpu_temp, ram_usage, fps = -1, -1, -1, -1
 
         for e in entries:
             sensor = e.get("sensor_name", "")
@@ -256,6 +256,10 @@ class HWiNFOTelemetryReader:
                 ram_usage = val
 
         # 2. ПОПЫТКА №2: Эвристика, если точный поиск ничего не дал (Fallback)
+        if fps <= 0:
+            fps_fallback = self._pick_fps(entries)
+            fps = fps_fallback if fps_fallback is not None else -1
+
         if cpu_temp <= 0:
             cpu_fallback = self._pick_cpu_temp(entries)
             cpu_temp = cpu_fallback if cpu_fallback is not None else -1
@@ -272,6 +276,7 @@ class HWiNFOTelemetryReader:
             "cpu_temp": cpu_temp if cpu_temp > 0 else -1,
             "gpu_temp": gpu_temp if gpu_temp > 0 else -1,
             "ram_usage": ram_usage if ram_usage > 0 else -1,
+            "fps": fps if fps > 0 else -1,
         }
         self._cache_time = now
         return self._cache
@@ -322,6 +327,43 @@ class HWiNFOTelemetryReader:
                 candidates_fallback.append(e["value"])
         if candidates_priority: return candidates_priority[0]
         if candidates_fallback: return candidates_fallback[0]
+        return None
+
+    def _pick_fps(self, entries: List[Dict]) -> Optional[float]:
+        candidates_exact = []
+        candidates_fallback = []
+
+        for e in entries:
+            sensor_lower = e.get("sensor_name", "").lower()
+            label_lower = e.get("label", "").lower()
+
+            # RTSS usually exposes "Framerate" under "RTSS" sensor.
+            if "fps" in label_lower or "framerate" in label_lower or "frame rate" in label_lower:
+                if not self._is_valid(e.get("value")):
+                    continue
+
+                # Exclude min/max/avg/1% low metrics
+                if any(x in label_lower for x in ["max", "min", "avg", "average", "low", "1%", "0.1%"]):
+                    continue
+
+                # Prefer exact match
+                if label_lower in ["fps", "framerate", "frame rate"]:
+                    candidates_exact.append((sensor_lower, e["value"]))
+                else:
+                    candidates_fallback.append((sensor_lower, e["value"]))
+
+        # Prioritize RTSS sensors among exact matches
+        for sensor, val in candidates_exact:
+            if "rtss" in sensor:
+                return val
+        if candidates_exact: return candidates_exact[0][1]
+
+        # Prioritize RTSS sensors among fallback matches
+        for sensor, val in candidates_fallback:
+            if "rtss" in sensor:
+                return val
+        if candidates_fallback: return candidates_fallback[0][1]
+
         return None
 
     def _pick_ram_usage(self, entries: List[Dict]) -> Optional[float]:

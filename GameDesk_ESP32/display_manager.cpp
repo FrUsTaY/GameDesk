@@ -328,7 +328,7 @@ void DisplayManager::drawHome(bool fullRedraw) {
     }
 
     if (!fullRedraw) {
-        _tft.fillRect(0, 40, _tft.width(), 100, COLOR_BG); // Очищаем область для названия игры (60) и статуса (80, 110)
+        _tft.fillRect(0, 40, _tft.width(), 120, COLOR_BG); // Очищаем область для названия игры (60), fps (90) и статуса (110, 130)
     }
 
     bool hasGame = (strlen(parsedData.game) > 0 && strcmp(parsedData.game, "NONE") != 0);
@@ -357,13 +357,22 @@ void DisplayManager::drawHome(bool fullRedraw) {
         _lastGameName[sizeof(_lastGameName) - 1] = '\0';
         _isTimerActive = true;
 
+        if (parsedData.fps > 0) {
+            char fpsBuf[16];
+            snprintf(fpsBuf, sizeof(fpsBuf), "%d FPS", parsedData.fps);
+            _tft.setTextColor(COLOR_FPS, COLOR_BG);
+            _tft.setTextFont(4);
+            _tft.setTextSize(1);
+            _tft.drawCentreString(fpsBuf, _tft.width() / 2, 95, 4);
+        }
+
         _tft.setTextColor(COLOR_ACCENT, COLOR_BG);
         _tft.setTextFont(4);
         _tft.setTextSize(1);
         if (strlen(parsedData.session) > 0 && strcmp(parsedData.session, "00:00:00") != 0) {
-            _tft.drawCentreString(parsedData.session, _tft.width() / 2, 130, 4);
+            _tft.drawCentreString(parsedData.session, _tft.width() / 2, 135, 4);
         } else {
-            _tft.drawCentreString("00:00:00", _tft.width() / 2, 130, 4);
+            _tft.drawCentreString("00:00:00", _tft.width() / 2, 135, 4);
         }
         _lastTimerUpdate = millis();
     }
@@ -474,11 +483,11 @@ void DisplayManager::updateHomeTimer() {
     _lastTimerUpdate = now;
 
     int timerX = 0;
-    int timerY = 120;
+    int timerY = 135;
     int timerW = _tft.width();
     int timerH = 50;
 
-    _tft.fillRect(timerX, timerY, timerW, timerH, COLOR_BG);
+    _tft.fillRect(timerX, timerY - 5, timerW, timerH + 5, COLOR_BG);
 
     _tft.setTextColor(COLOR_ACCENT, COLOR_BG);
     _tft.setTextFont(4);

@@ -330,14 +330,40 @@ class HWiNFOTelemetryReader:
         return None
 
     def _pick_fps(self, entries: List[Dict]) -> Optional[float]:
+        candidates_exact = []
+        candidates_fallback = []
+
         for e in entries:
             sensor_lower = e.get("sensor_name", "").lower()
             label_lower = e.get("label", "").lower()
 
             # RTSS usually exposes "Framerate" under "RTSS" sensor.
             if "fps" in label_lower or "framerate" in label_lower or "frame rate" in label_lower:
-                if self._is_valid(e.get("value")):
-                    return e["value"]
+                if not self._is_valid(e.get("value")):
+                    continue
+
+                # Exclude min/max/avg/1% low metrics
+                if any(x in label_lower for x in ["max", "min", "avg", "average", "low", "1%", "0.1%"]):
+                    continue
+
+                # Prefer exact match
+                if label_lower in ["fps", "framerate", "frame rate"]:
+                    candidates_exact.append((sensor_lower, e["value"]))
+                else:
+                    candidates_fallback.append((sensor_lower, e["value"]))
+
+        # Prioritize RTSS sensors among exact matches
+        for sensor, val in candidates_exact:
+            if "rtss" in sensor:
+                return val
+        if candidates_exact: return candidates_exact[0][1]
+
+        # Prioritize RTSS sensors among fallback matches
+        for sensor, val in candidates_fallback:
+            if "rtss" in sensor:
+                return val
+        if candidates_fallback: return candidates_fallback[0][1]
+
         return None
 
     def _pick_ram_usage(self, entries: List[Dict]) -> Optional[float]:

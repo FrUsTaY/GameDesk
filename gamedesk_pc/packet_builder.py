@@ -61,7 +61,9 @@ class PacketBuilder:
             state: str,
             fps: int,
             cpu: int,
+            cpu_usage: int,
             gpu: int,
+            gpu_usage: int,
             ram: int
     ) -> str:
         """
@@ -73,7 +75,9 @@ class PacketBuilder:
             STATE (RUNNING|IDLE|OFFLINE)
             FPS (число или -1)
             CPU (число или -1)
+            CU (число или -1)
             GPU (число или -1)
+            GU (число или -1)
             RAM (число или -1)
 
         VER и DEVICE добавляются в каждый 5-й пакет (счётчик внутри класса),
@@ -103,7 +107,9 @@ class PacketBuilder:
             "STATE": state,
             "FPS": str(fps),
             "CPU": str(cpu),
+            "CU": str(cpu_usage),
             "GPU": str(gpu),
+            "GU": str(gpu_usage),
             "RAM": str(ram)
         }
 

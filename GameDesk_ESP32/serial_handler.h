@@ -15,7 +15,9 @@ struct ParsedData {
   char state[10];          // RUNNING / IDLE / OFFLINE
   int  fps;                // кадры/с или -1
   int  cpu;                // температура CPU или -1
+  int  cpu_usage;          // загрузка CPU % или -1
   int  gpu;                // температура GPU или -1
+  int  gpu_usage;          // загрузка GPU % или -1
   int  ram;                // использование RAM % или -1
   bool hasNewData;         // флаг, что пришли свежие DATA
   bool hasNewList;         // флаг, что пришёл новый LIST (добавлено)

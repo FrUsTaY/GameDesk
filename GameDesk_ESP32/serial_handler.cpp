@@ -145,8 +145,12 @@ static void parseSinglePacket(const char* packet) {
             parsedData.fps = atoi(token + 4);
         } else if (strncmp(token, "CPU=", 4) == 0) {
             parsedData.cpu = atoi(token + 4);
+        } else if (strncmp(token, "CU=", 3) == 0) {
+            parsedData.cpu_usage = atoi(token + 3);
         } else if (strncmp(token, "GPU=", 4) == 0) {
             parsedData.gpu = atoi(token + 4);
+        } else if (strncmp(token, "GU=", 3) == 0) {
+            parsedData.gpu_usage = atoi(token + 3);
         } else if (strncmp(token, "RAM=", 4) == 0) {
             parsedData.ram = atoi(token + 4);
         }
@@ -325,7 +329,9 @@ void serialHandlerInit() {
     memset(&parsedData, 0, sizeof(parsedData));
     parsedData.fps = -1;
     parsedData.cpu = -1;
+    parsedData.cpu_usage = -1;
     parsedData.gpu = -1;
+    parsedData.gpu_usage = -1;
     parsedData.ram = -1;
     strcpy(parsedData.state, "IDLE");
     parsedData.hasNewData = false;

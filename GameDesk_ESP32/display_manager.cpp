@@ -405,20 +405,22 @@ void DisplayManager::drawMonitor(bool fullRedraw) {
 
     // Реальные данные из последнего DATA-пакета (parsedData), а не заглушка.
     // -1 (нет данных с ПК, например LibreHardwareMonitor недоступен) -> "--"
-    char buf[24];
+    char buf[40];
 
-    if (parsedData.cpu >= 0) {
-        snprintf(buf, sizeof(buf), "CPU: %dC", parsedData.cpu);
-    } else {
-        snprintf(buf, sizeof(buf), "CPU: --");
-    }
+    char cpuTempStr[8], cpuUsageStr[8];
+    if (parsedData.cpu >= 0) snprintf(cpuTempStr, sizeof(cpuTempStr), "%d", parsedData.cpu);
+    else strcpy(cpuTempStr, "--");
+    if (parsedData.cpu_usage >= 0) snprintf(cpuUsageStr, sizeof(cpuUsageStr), "%d", parsedData.cpu_usage);
+    else strcpy(cpuUsageStr, "--");
+    snprintf(buf, sizeof(buf), "CPU: %sC / %s%%", cpuTempStr, cpuUsageStr);
     drawCenteredText(buf, 100, 4, COLOR_CPU);
 
-    if (parsedData.gpu >= 0) {
-        snprintf(buf, sizeof(buf), "GPU: %dC", parsedData.gpu);
-    } else {
-        snprintf(buf, sizeof(buf), "GPU: --");
-    }
+    char gpuTempStr[8], gpuUsageStr[8];
+    if (parsedData.gpu >= 0) snprintf(gpuTempStr, sizeof(gpuTempStr), "%d", parsedData.gpu);
+    else strcpy(gpuTempStr, "--");
+    if (parsedData.gpu_usage >= 0) snprintf(gpuUsageStr, sizeof(gpuUsageStr), "%d", parsedData.gpu_usage);
+    else strcpy(gpuUsageStr, "--");
+    snprintf(buf, sizeof(buf), "GPU: %sC / %s%%", gpuTempStr, gpuUsageStr);
     drawCenteredText(buf, 140, 4, COLOR_GPU);
 
     if (parsedData.ram >= 0) {

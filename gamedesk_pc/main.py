@@ -125,7 +125,9 @@ class GameDeskApp:
 
                     telemetry = {
                         "cpu": int(round(_pick(hw_telemetry["cpu_temp"], lhm_telemetry["cpu_temp"]))),
+                        "cpu_usage": int(round(_pick(hw_telemetry.get("cpu_usage", -1), lhm_telemetry.get("cpu_usage", -1)))),
                         "gpu": int(round(_pick(hw_telemetry["gpu_temp"], lhm_telemetry["gpu_temp"]))),
+                        "gpu_usage": int(round(_pick(hw_telemetry.get("gpu_usage", -1), lhm_telemetry.get("gpu_usage", -1)))),
                         "ram": int(round(_pick(hw_telemetry["ram_usage"], lhm_telemetry["ram_usage"]))),
                         "fps": int(round(_pick(hw_telemetry.get("fps", -1), lhm_telemetry.get("fps", -1)))),
                     }
@@ -139,7 +141,9 @@ class GameDeskApp:
                             state="RUNNING",
                             fps=telemetry["fps"],
                             cpu=telemetry["cpu"],
+                            cpu_usage=telemetry["cpu_usage"],
                             gpu=telemetry["gpu"],
+                            gpu_usage=telemetry["gpu_usage"],
                             ram=telemetry["ram"]
                         )
                     else:
@@ -149,7 +153,9 @@ class GameDeskApp:
                             state="IDLE",
                             fps=telemetry["fps"],
                             cpu=telemetry["cpu"],
+                            cpu_usage=telemetry["cpu_usage"],
                             gpu=telemetry["gpu"],
+                            gpu_usage=telemetry["gpu_usage"],
                             ram=telemetry["ram"]
                         )
 

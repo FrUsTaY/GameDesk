@@ -223,7 +223,7 @@ class HWiNFOTelemetryReader:
     def __init__(self):
         self._reader = HWiNFOReader()
         self._cache: Dict[str, Union[int, float]] = {
-            "cpu_temp": -1, "gpu_temp": -1, "ram_usage": -1, "fps": -1
+            "cpu_temp": -1, "cpu_usage": -1, "gpu_temp": -1, "gpu_usage": -1, "ram_usage": -1, "fps": -1
         }
         self._cache_time: float = 0
         self._cache_ttl: float = 2.0
@@ -236,12 +236,12 @@ class HWiNFOTelemetryReader:
         entries = self._reader.get_entries()
 
         if not entries:
-            self._cache = {"cpu_temp": -1, "gpu_temp": -1, "ram_usage": -1, "fps": -1}
+            self._cache = {"cpu_temp": -1, "cpu_usage": -1, "gpu_temp": -1, "gpu_usage": -1, "ram_usage": -1, "fps": -1}
             self._cache_time = now
             return self._cache
 
         # 1. ПОПЫТКА №1: Точный поиск (Fast Path)
-        cpu_temp, gpu_temp, ram_usage, fps = -1, -1, -1, -1
+        cpu_temp, cpu_usage, gpu_temp, gpu_usage, ram_usage, fps = -1, -1, -1, -1, -1, -1
 
         for e in entries:
             sensor = e.get("sensor_name", "")
@@ -250,8 +250,12 @@ class HWiNFOTelemetryReader:
 
             if sensor == "CPU [#0]: AMD Ryzen 5 7500F: Enhanced" and label == "CPU (Tctl/Tdie)":
                 cpu_temp = val
+            elif sensor == "CPU [#0]: AMD Ryzen 5 7500F: Enhanced" and label == "Total CPU Usage":
+                cpu_usage = val
             elif sensor == "dGPU [#0]: NVIDIA GeForce RTX 5070: Palit GeForce RTX 5070 Infinity 3/White OC" and label == "GPU Temperature":
                 gpu_temp = val
+            elif sensor == "dGPU [#0]: NVIDIA GeForce RTX 5070: Palit GeForce RTX 5070 Infinity 3/White OC" and label == "GPU Core Load":
+                gpu_usage = val
             elif sensor == "System: GIGABYTE B850 GAMING WIFI6" and label == "Physical Memory Load":
                 ram_usage = val
 
@@ -264,9 +268,17 @@ class HWiNFOTelemetryReader:
             cpu_fallback = self._pick_cpu_temp(entries)
             cpu_temp = cpu_fallback if cpu_fallback is not None else -1
 
+        if cpu_usage <= 0:
+            cpu_u_fallback = self._pick_cpu_usage(entries)
+            cpu_usage = cpu_u_fallback if cpu_u_fallback is not None else -1
+
         if gpu_temp <= 0:
             gpu_fallback = self._pick_gpu_temp(entries)
             gpu_temp = gpu_fallback if gpu_fallback is not None else -1
+
+        if gpu_usage <= 0:
+            gpu_u_fallback = self._pick_gpu_usage(entries)
+            gpu_usage = gpu_u_fallback if gpu_u_fallback is not None else -1
 
         if ram_usage <= 0:
             ram_fallback = self._pick_ram_usage(entries)
@@ -274,7 +286,9 @@ class HWiNFOTelemetryReader:
 
         self._cache = {
             "cpu_temp": cpu_temp if cpu_temp > 0 else -1,
+            "cpu_usage": cpu_usage if cpu_usage > 0 else -1,
             "gpu_temp": gpu_temp if gpu_temp > 0 else -1,
+            "gpu_usage": gpu_usage if gpu_usage > 0 else -1,
             "ram_usage": ram_usage if ram_usage > 0 else -1,
             "fps": fps if fps > 0 else -1,
         }
@@ -284,6 +298,45 @@ class HWiNFOTelemetryReader:
     @staticmethod
     def _is_valid(value: Optional[float]) -> bool:
         return value is not None and value > 0
+
+    def _pick_cpu_usage(self, entries: List[Dict]) -> Optional[float]:
+        candidates = []
+        for e in entries:
+            # Usage might be type_id == 7 (Usage) or sometimes 8 (Other)
+            if e.get("type_id") not in (7, 8):
+                continue
+            sensor_lower = e.get("sensor_name", "").lower()
+            label_lower = e.get("label", "").lower()
+            if "gpu" in sensor_lower or "nvidia" in sensor_lower or "radeon" in sensor_lower:
+                continue
+            if "cpu" not in sensor_lower:
+                continue
+            if not self._is_valid(e.get("value")):
+                continue
+            if "total" in label_lower and "usage" in label_lower:
+                candidates.insert(0, e["value"]) # Priority
+            elif "usage" in label_lower or "load" in label_lower:
+                candidates.append(e["value"])
+        if candidates: return candidates[0]
+        return None
+
+    def _pick_gpu_usage(self, entries: List[Dict]) -> Optional[float]:
+        candidates = []
+        for e in entries:
+            if e.get("type_id") not in (7, 8):
+                continue
+            sensor_lower = e.get("sensor_name", "").lower()
+            label_lower = e.get("label", "").lower()
+            if not ("gpu" in sensor_lower or "nvidia" in sensor_lower or "radeon" in sensor_lower):
+                continue
+            if not self._is_valid(e.get("value")):
+                continue
+            if "core" in label_lower and ("load" in label_lower or "usage" in label_lower):
+                candidates.insert(0, e["value"]) # Priority
+            elif "load" in label_lower or "usage" in label_lower:
+                candidates.append(e["value"])
+        if candidates: return candidates[0]
+        return None
 
     def _pick_cpu_temp(self, entries: List[Dict]) -> Optional[float]:
         candidates_priority = []

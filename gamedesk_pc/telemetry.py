@@ -47,7 +47,9 @@ class TelemetryReader:
         """
         self._cache: Dict[str, Union[int, float]] = {
             'cpu_temp': -1,
+            'cpu_usage': -1,
             'gpu_temp': -1,
+            'gpu_usage': -1,
             'ram_usage': -1
         }
         self._cache_time: float = 0
@@ -124,24 +126,49 @@ class TelemetryReader:
 
         # Если библиотека не инициализирована, возвращаем заглушку
         if not self._is_initialized or not CLR_AVAILABLE:
-            self._cache = {'cpu_temp': -1, 'gpu_temp': -1, 'ram_usage': -1, 'fps': -1}
+            self._cache = {
+                'cpu_temp': -1, 'cpu_usage': -1,
+                'gpu_temp': -1, 'gpu_usage': -1,
+                'ram_usage': -1, 'fps': -1
+            }
+            # Fallback for CPU usage via psutil if LHM is not available
+            if PSUTIL_AVAILABLE:
+                try:
+                    self._cache['cpu_usage'] = psutil.cpu_percent(interval=None)
+                except Exception:
+                    pass
             self._cache_time = now
             return self._cache
 
         try:
             cpu_temp = self._get_cpu_temp()
+            cpu_usage = self._get_cpu_usage()
             gpu_temp = self._get_gpu_temp()
+            gpu_usage = self._get_gpu_usage()
             ram_usage = self._get_ram_usage()
+
+            # Fallback for CPU usage via psutil
+            if (cpu_usage is None or cpu_usage < 0) and PSUTIL_AVAILABLE:
+                try:
+                    cpu_usage = psutil.cpu_percent(interval=None)
+                except Exception:
+                    pass
 
             self._cache = {
                 'cpu_temp': cpu_temp if cpu_temp is not None else -1,
+                'cpu_usage': cpu_usage if cpu_usage is not None else -1,
                 'gpu_temp': gpu_temp if gpu_temp is not None else -1,
+                'gpu_usage': gpu_usage if gpu_usage is not None else -1,
                 'ram_usage': ram_usage if ram_usage is not None else -1,
                 'fps': -1 # LHM doesn't provide FPS
             }
         except Exception as e:
             logger.error(f"Ошибка при сборе телеметрии: {e}")
-            self._cache = {'cpu_temp': -1, 'gpu_temp': -1, 'ram_usage': -1, 'fps': -1}
+            self._cache = {
+                'cpu_temp': -1, 'cpu_usage': -1,
+                'gpu_temp': -1, 'gpu_usage': -1,
+                'ram_usage': -1, 'fps': -1
+            }
 
         self._cache_time = now
         return self._cache
@@ -192,6 +219,33 @@ class TelemetryReader:
             logger.debug(f"Ошибка получения температуры CPU: {e}")
             return None
 
+    def _get_cpu_usage(self) -> Optional[float]:
+        """Возвращает общую загрузку CPU или None."""
+        if not self._is_initialized:
+            return None
+        try:
+            from LibreHardwareMonitor import Hardware
+            fallback_value = None
+            for hardware in self._computer.Hardware:
+                if hardware.HardwareType == Hardware.HardwareType.Cpu:
+                    hardware.Update()
+                    for sensor in hardware.Sensors:
+                        if sensor.SensorType == Hardware.SensorType.Load:
+                            value = sensor.Value
+                            if not self._is_valid_temp(value): # it checks if > 0
+                                continue
+                            name_lower = sensor.Name.lower()
+                            if 'total' in name_lower or 'cpu total' in name_lower:
+                                return value
+                            if fallback_value is None:
+                                fallback_value = value
+                    if fallback_value is not None:
+                        return fallback_value
+            return None
+        except Exception as e:
+            logger.debug(f"Ошибка получения загрузки CPU: {e}")
+            return None
+
     def _get_gpu_temp(self) -> Optional[float]:
         """Возвращает температуру GPU или None."""
         if not self._is_initialized:
@@ -222,6 +276,37 @@ class TelemetryReader:
             return None
         except Exception as e:
             logger.debug(f"Ошибка получения температуры GPU: {e}")
+            return None
+
+    def _get_gpu_usage(self) -> Optional[float]:
+        """Возвращает загрузку GPU (Core) или None."""
+        if not self._is_initialized:
+            return None
+        try:
+            from LibreHardwareMonitor import Hardware
+            fallback_value = None
+            for hardware in self._computer.Hardware:
+                if hardware.HardwareType in (
+                    Hardware.HardwareType.GpuNvidia,
+                    Hardware.HardwareType.GpuAmd,
+                    Hardware.HardwareType.GpuIntel
+                ):
+                    hardware.Update()
+                    for sensor in hardware.Sensors:
+                        if sensor.SensorType == Hardware.SensorType.Load:
+                            value = sensor.Value
+                            if not self._is_valid_temp(value):
+                                continue
+                            name_lower = sensor.Name.lower()
+                            if 'gpu core' in name_lower or 'core' in name_lower:
+                                return value
+                            if fallback_value is None:
+                                fallback_value = value
+                    if fallback_value is not None:
+                        return fallback_value
+            return None
+        except Exception as e:
+            logger.debug(f"Ошибка получения загрузки GPU: {e}")
             return None
 
     def _get_ram_usage(self) -> Optional[float]:
